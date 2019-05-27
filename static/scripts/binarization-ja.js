@@ -5,16 +5,28 @@
         if(files.length > 0) {
             if(files[0].type == "image/png") {
 
-                console.log(files[0]);
                 var reader = new FileReader();
                 reader.onload = function(event) {
-                    var imageArr = event.target.result;
+                    var buffArrey = event.target.result;
+                    var imageArr = new Uint8ClampedArray(buffArrey);
+
+                    console.log(buffArrey);
                     console.log(imageArr);
-                    //var image = new ImageData(imageArr);
-                    //console.log(image);
+                    var image = new ImageData(imageArr, 170);
+                    console.log(image);
                 };
                 reader.readAsArrayBuffer(files[0]);
-                //var image = new ImageData(
+
+                // Show image in left box
+                var loader = new FileReader();
+                loader.onload = function(event) {
+                    var dataUri = event.target.result
+                    var image = $("<img />", {
+                                  src: dataUri
+                    });
+                    image.appendTo("#left .free-box");
+                }
+                loader.readAsDataURL(files[0]);
             }
         }
     });
