@@ -4,89 +4,117 @@
 
         if(files.length > 0) {
             if(files[0].type == "image/png") {
-                /*
-                var reader = new FileReader();
-                reader.onload = function(event) {
-                    var buffArrey = event.target.result;
-                    var imageArr = new Uint8ClampedArray(buffArrey);
-                    var size = Math.ceil($(".in-file").width());
-                    console.log(size);
-                    var newImageArr = new Uint8ClampedArray(size * size * 4);
-                    var canvas = document.getElementById('canvas');
-                    canvas.width = $(".in-file").width();
-                    canvas.height = $(".in-file").height();
-                    var ctx = canvas.getContext("2d");
-                    var image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    console.log(image.data);
 
-                    for(var index = 0; index < image.data.length; index += 4) {
-                        //if(index % 3 == 0 || index == 0 || index % 2 != 0)
-                        //image.data[index] = imageArr[index];
-                        image.data[index + 0] = 11;    // R value
-                        image.data[index + 1] = 163;  // G value
-                        image.data[index + 2] = 63;    // B value
-                        image.data[index + 3] = 255;
-                        /*if(index % 2 != 0 && index != 0) 
-                            newImageArr[index] = 90;
-
-                        if(index % 3 == 0 && index != 0)
-                            newImageArr[index] = 1; 
-                    }
-
-                    console.log(buffArrey.length);
-                    console.log(imageArr);
-                    console.log(newImageArr);
-                    //var image = new ImageData(imageArr, 4 * 512);
-                    //var image = new ImageData(newImageArr, size);
-                    console.log(image);
-                    //console.log($("convas"));
-                    
-                    console.log(canvas);
-
-                    //ctx.fillRect(10,10,50,50)
-                    ctx.putImageData(image, 1, 1, 0, 0, size, size);
-                    //ctx.drawImage(image, 0, 0);
-                    //var ctx = canvas.getContext('2d');
-                    //ctx.drawImage(image, 0, 0);
-                    $("<img />", {
-                        src: canvas.toDataURL("image/png"),
-                    }).appendTo("#right .free-box");
-                };
-                
-                */
                 // Show image in left box
                 var loader = new FileReader();
                 loader.onload = function(event) {
-                    var dataUri = event.target.result
-                    var image = $("<img />", {
-                                  src: dataUri,
-                                  class: "in-file",
-                                  on: {
-                                      load: function() {
-                                          var canvas = document.getElementById("das");
-                                          console.log(canvas);
-                                          var ctx = canvas.getContext('2d');
-                                          ctx.drawImage(this, 0, 0);
-                                          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                                          console.log(imageData);
-                                          canvas.hudden;
-                                      }
-                                  }
-                    });
-                    image.appendTo("#left .free-box");
-                    
+                    var dataUrl = event.target.result
+                    var img = new Image();
+
+                    // Set src for load image
+                    img.src = dataUrl;
+
+                    img.onload = imageTreatment(img);
+                    img.style.display = 'none';
                 }
                 loader.readAsDataURL(files[0]);
             }
         }
     });
 }());
-/*
-function () {
-        var canvas = document.getElementById("das");
-                                          console.log(canvas);
-                                          var ctx = canvas.getContext('2d');
-                                          ctx.drawImage(this, 0, 0);
-                                          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                                          console.log(imageData);
-                                          canvas.hudden;*/
+
+function imageTreatment(img) {
+    /**
+    *   This function is listener for event of load img
+    *   This prepares image for bimarization
+    *   And after that runs binarization
+    *
+    *   @param {object} img
+    *   @return {nothing}
+    */
+
+    if(img != '' || img != null) {
+
+        // Query left canvas with standart dom method
+        // Because if we use jquery it does not give use
+        // Special method for canvas
+        var leftCanvas = document.getElementById("left-canvas");
+        var rightCanvas = document.getElementById("right-canvas");
+
+        var imgWidth = img.width;
+        var imgHeight = img.height;
+
+        // Change size of boxes with jquery
+        $(".box").width(imgWidth + "px");
+        $(".box").height(imgHeight + "px");
+
+        leftCanvas.width = imgWidth;
+        leftCanvas.height = imgHeight;
+        rightCanvas.width = imgWidth;
+        rightCanvas.height = imgHeight;
+
+        var leftContext = leftCanvas.getContext('2d');
+        var rightContext = rightCanvas.getContext('2d');
+
+        leftContext.drawImage(img, 0, 0);
+
+        var sourceImgData = leftContext.getImageData(0, 0, imgWidth, imgHeight);
+        var resultImgData = rightContext.getImageData(0, 0, imgWidth, imgHeight);
+        //console.log(sourceImgData);
+
+        for(var pixel = 0; pixel < resultImgData.data.length; pixel += 4) {
+
+            // Translate image to grayscale
+            resultImgData.data[pixel + 3] = (
+                    0.2125 * sourceImgData.data[pixel] +
+                    0.7154 * sourceImgData.data[pixel + 1] +
+                    0.0721 * sourceImgData.data[pixel + 2]
+            );
+        }
+
+        //console.log(resultImgData);
+        binarization(resultImgData.data, 8, 15);
+        rightContext.putImageData(resultImgData, 0, 0);
+    }
+};
+
+function binarization(imageData, segment, allowableError) {
+    /**
+    *   This function does binarization
+    *   @param {array} imageData
+    *   @param {number} segment
+    *   @param {number} allowableError
+    *   @return {nothing}
+    */
+
+    var pixelCount = imageData.length / 4;
+    var pixelInSegm = pixelCount / segment;
+
+    // Loop on segments
+    for(var segmIndex = 0; segmIndex < pixelCount; segmIndex += pixelInSegm) {
+        var startIndex = segmIndex * 4;
+        var endIndex = 4 * (segmIndex + pixelInSegm);
+        var sumBrightness = 0;
+
+        // Calculation sum of brightness
+        for(var index = startIndex; index < pixelInSegm; index++) {
+            sumBrightness += imageData[index + 3];
+        }
+
+        var avgBrightness = sumBrightness / pixelInSegm;
+        //console.log(sumBrightness);
+        console.log(avgBrightness * (1 - allowableError / 100));
+
+        for(var index = startIndex; index < pixelInSegm; index += 4) {
+            var pixelBrightness = (imageData[index] +
+                                   imageData[index + 1] +
+                                   imageData[index + 2]);
+
+            if(imageData[index + 3] < avgBrightness * (1 - allowableError / 100)) {
+                imageData[index + 3] = 0;
+            } else {
+                imageData[index + 3] = 255;
+            }
+        }
+    }
+};
