@@ -65,11 +65,12 @@ function imageTreatment(img) {
         for(var pixel = 0; pixel < resultImgData.data.length; pixel += 4) {
 
             // Translate image to grayscale
-            resultImgData.data[pixel + 3] = (
-                    0.2125 * sourceImgData.data[pixel] +
-                    0.7154 * sourceImgData.data[pixel + 1] +
-                    0.0721 * sourceImgData.data[pixel + 2]
-            );
+            //resultImgData.data[pixel + 3] = (
+            resultImgData.data[pixel] = 0.2125 * sourceImgData.data[pixel];
+            resultImgData.data[pixel + 1] = 0.0721 * sourceImgData.data[pixel + 1];
+            resultImgData.data[pixel + 2] = 0.7154 * sourceImgData.data[pixel + 2];
+            resultImgData.data[pixel + 3] =  sourceImgData.data[pixel + 3];
+            //);
         }
 
         //console.log(resultImgData);
