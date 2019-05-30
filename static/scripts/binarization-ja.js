@@ -60,21 +60,27 @@ function imageTreatment(img) {
 
         var sourceImgData = leftContext.getImageData(0, 0, imgWidth, imgHeight);
         var resultImgData = rightContext.getImageData(0, 0, imgWidth, imgHeight);
-        //console.log(sourceImgData);
 
         for(var pixel = 0; pixel < resultImgData.data.length; pixel += 4) {
 
             // Translate image to grayscale
-            //resultImgData.data[pixel + 3] = (
-            resultImgData.data[pixel] = 0.2125 * sourceImgData.data[pixel];
-            resultImgData.data[pixel + 1] = 0.0721 * sourceImgData.data[pixel + 1];
-            resultImgData.data[pixel + 2] = 0.7154 * sourceImgData.data[pixel + 2];
+            // We can do it so, at first we calculate avg for r, g, b channel
+            // And set channel value for result image 
+            var avgBrightness = (
+                            (sourceImgData.data[pixel] +
+                             sourceImgData.data[pixel + 1] +
+                             sourceImgData.data[pixel + 2]
+                            ) / 3
+            );
+
+            resultImgData.data[pixel] = avgBrightness;
+            resultImgData.data[pixel + 1] = avgBrightness;
+            resultImgData.data[pixel + 2] = avgBrightness;
             resultImgData.data[pixel + 3] =  sourceImgData.data[pixel + 3];
-            //);
         }
 
         //console.log(resultImgData);
-        binarization(resultImgData.data, 8, 15);
+        //binarization(resultImgData.data, 8, 15);
         rightContext.putImageData(resultImgData, 0, 0);
     }
 };
@@ -99,7 +105,8 @@ function binarization(imageData, segment, allowableError) {
 
         // Calculation sum of brightness
         for(var index = startIndex; index < pixelInSegm; index++) {
-            sumBrightness += imageData[index + 3];
+            if(
+            sumBrightness += imageData[index];
         }
 
         var avgBrightness = sumBrightness / pixelInSegm;
@@ -111,10 +118,14 @@ function binarization(imageData, segment, allowableError) {
                                    imageData[index + 1] +
                                    imageData[index + 2]);
 
-            if(imageData[index + 3] < avgBrightness * (1 - allowableError / 100)) {
-                imageData[index + 3] = 0;
+            if(pixelBrightness < avgBrightness * (1 - allowableError / 100)) {
+                imageData[index] = 0;
+                imageData[index + 1] = 0;
+                imageData[index + 2] = 0;
             } else {
-                imageData[index + 3] = 255;
+                imageData[index] = 255;
+                imageData[index + 1] = 255;
+                imageData[index + 2] = 255;
             }
         }
     }
