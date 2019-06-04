@@ -80,7 +80,7 @@ function imageTreatment(img) {
         }
 
         //console.log(resultImgData);
-        //binarization(resultImgData.data, 8, 15);
+        binarization(resultImgData.data, 8, 15);
         rightContext.putImageData(resultImgData, 0, 0);
     }
 };
@@ -97,6 +97,7 @@ function binarization(imageData, segment, allowableError) {
     var pixelCount = imageData.length / 4;
     var pixelInSegm = pixelCount / segment;
 
+    console.log("length -> " + imageData.length);
     // Loop on segments
     for(var segmIndex = 0; segmIndex < pixelCount; segmIndex += pixelInSegm) {
         var startIndex = segmIndex * 4;
@@ -104,14 +105,14 @@ function binarization(imageData, segment, allowableError) {
         var sumBrightness = 0;
 
         // Calculation sum of brightness
-        for(var index = startIndex; index < pixelInSegm; index++) {
-            if(
-            sumBrightness += imageData[index];
+        for(var index = startIndex; index < endIndex; index++) {
+            if(index % 3 != 0)
+                sumBrightness += imageData[index];
         }
 
-        var avgBrightness = sumBrightness / pixelInSegm;
+        var avgBrightness = sumBrightness / (endIndex - startIndex);
         //console.log(sumBrightness);
-        console.log(avgBrightness * (1 - allowableError / 100));
+        console.log(startIndex + "|" + endIndex + "|" + avgBrightness * (1 - allowableError / 100));
 
         for(var index = startIndex; index < pixelInSegm; index += 4) {
             var pixelBrightness = (imageData[index] +
