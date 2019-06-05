@@ -66,7 +66,7 @@ function imageTreatment(img) {
             // Translate image to grayscale
             // We can do it so, at first we calculate avg for r, g, b channel
             // And set channel value for result image 
-            var avgBrightness = (
+            var avgBrightness = Math.ceil(
                             (sourceImgData.data[pixel] +
                              sourceImgData.data[pixel + 1] +
                              sourceImgData.data[pixel + 2]
@@ -80,20 +80,100 @@ function imageTreatment(img) {
         }
 
         //console.log(resultImgData);
-        binarization(resultImgData.data, 8, 15);
+        doBinarization(resultImgData.data, imgWidth, imgHeight, 8, 15);
+       // doIntegralImage(resultImgData.data, imgWidth, imgHeight);
         rightContext.putImageData(resultImgData, 0, 0);
     }
 };
 
-function binarization(imageData, segment, allowableError) {
+function Pixel(red, green, blue, alpha) {
+    /**
+    *   This is constructor of class pixel
+    *   @papam {number} red
+    *   @param {number} green
+    *   @param {number} blue
+    *   @param {number} alpha
+    *   @return {object}
+    */
+
+    this._red = red;
+    this._green = green;
+    this._blue = blue;
+    this._alpha = alpha;
+
+    this.getBrightness = function() {
+        /**
+        *   This method returns avg of red, green, blue
+        *   @param {object} this
+        *   @return {numbrt} avgRBG
+        */
+
+        return Math.ceil((this._red + this._blue + this._green) / 3);
+    };
+};
+
+
+function doBinarization(source, width, height, segment, allowableError) {
     /**
     *   This function does binarization
-    *   @param {array} imageData
+    *   @param {array} source
     *   @param {number} segment
     *   @param {number} allowableError
     *   @return {nothing}
     */
 
+    // Create integral image from source
+    var integralImage = {};
+    var pixels = [];
+
+    for(var index = 0; index < source.length; index += 4) {
+        pixels.push(new Pixel(source[index],
+                              source[index + 1],
+                              source[index + 2],
+                              source[index + 3]));
+    }
+
+    for(var xIndex = 0; xIndex < width; xIndex++) {
+        var sumBrightness = 0;
+
+        for(var yIndex = 0; yIndex < height; yIndex++) {
+            var index = yIndex * width + xIndex;
+
+            sumBrightness += pixels[index].getBrightness();
+
+            if(xIndex == 0)
+                integralImage[index] = sumBrightness;
+            else {
+                integralImage[index] = (integralImage[index - 1] +
+                                        sumBrightness);
+            }
+        }
+    }
+
+    var segmentLen = width / segment;
+
+    for(var xIndex = 0; xIndex < width; xIndex++) {
+        for(var yIndex = 0; yIndex < height; yIndex++) {
+            var xLeft = xIndex - segmentLen;
+            var yLeft = yIndex - segmentLen;
+            var xRight = xIndex + segmentLen;
+            var yRight = yIndex + segmentLen;
+
+            if(xLeft < 0)
+                xLeft = 0
+            if(xRight >= width)
+                xRight = width - 1;
+            if(yLeft < 0)
+                yLeft = 0;
+            if(yRight >= height)
+                yGight = height - 1;
+
+            var countPoint = (xRight - xLeft) * (yRight - yLeft);
+
+           brightness = integralImage[] 
+        }
+    }
+    /*
     var pixelCount = imageData.length / 4;
     var pixelInSegm = pixelCount / segment;
 
@@ -119,7 +199,7 @@ function binarization(imageData, segment, allowableError) {
                                    imageData[index + 1] +
                                    imageData[index + 2]);
 
-            if(pixelBrightness < avgBrightness * (1 - allowableError / 100)) {
+            if(pixelBrightness > avgBrightness * (1 - allowableError / 100)) {
                 imageData[index] = 0;
                 imageData[index + 1] = 0;
                 imageData[index + 2] = 0;
@@ -129,5 +209,5 @@ function binarization(imageData, segment, allowableError) {
                 imageData[index + 2] = 255;
             }
         }
-    }
+    }*/
 };
