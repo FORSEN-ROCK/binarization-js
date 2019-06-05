@@ -170,7 +170,11 @@ function doBinarization(source, width, height, segment, allowableError) {
 
             var countPoint = (xRight - xLeft) * (yRight - yLeft);
 
-           brightness = integralImage[] 
+            var brightness = (integralImage[yRight * width + xRight] +
+                              integralImage[yLeft * width + xLeft] -
+                              integralImage[yLeft * width + xRight] -
+                              integralImage[yRight * width + xLeft]);
+            console.log(brightness);
         }
     }
     /*
