@@ -123,9 +123,90 @@ function doBinarization(source, width, height, segment, allowableError) {
     */
 
     // Create integral image from source
-    var integralImage = {};
+    var integralImage = [];
     var pixels = [];
 
+    for(var index = 0; index < source.length; index += 4) {
+        pixels.push(new Pixel(source[index],
+                              source[index + 1],
+                              source[index + 2],
+                              source[index + 3]));
+    }
+
+    for(var xOfset = 0; xOfset < width; xOfset++) {
+        var column = [];
+        var brightness = 0;
+
+        for(var yOfset = 0; yOfset < height; yOfset++) {
+            var index = yOfset * width + xOfset;
+
+            brightness += pixels[index].getBrightness();
+
+            if(xOfset == 0)
+                column.push(brightness);
+            else
+                column.push(brightness + integralImage[xOfset - 1][yOfset]);
+        }
+
+        integralImage.push(column);
+    }
+
+    console.table(integralImage);
+    console.log(integralImage[0][0] + integralImage[19][19] - (integralImage[19][0] + integralImage[0][19]));
+
+    // Do binarization
+    var segmentLen = Math.floor(width / segment);
+    console.log(segmentLen);
+
+    // Define defaulte value of segmentBrightness
+    var segmentBrightness = (integralImage[0][0] + 
+                             integralImage[width - 1][height - 1] -
+                             integralImage[0][height - 1] - 
+                             integralImage[width - 1][0]);
+
+    var segmentSize = width * height;
+    var heightOfset = 0;
+    var widthOfset = 0;
+
+    // Main loop
+    for(var ofset = 0; ofset < source.length; ofset += 4) {
+        var pixelBrightness = (source[ofset] + source[ofset + 1] +
+                               source[ofset + 2]);
+
+        if(ofset % width == 0) {
+            heightOfset++;
+            widthOfset = 0;
+        } else {
+            widthOfset++; //?
+        }
+
+        if(segmentLen > 10) {
+            if((widthOfset % segmentLen == 0) &&
+               (heightOfset + segmentLen) < height &&
+               (widthOfset + segmentLen) < width) {
+
+                segmentBrightness = (
+                  integralImage[widthOfset][heightOfset] +
+                  integralImage[widthOfset + segmentLen][heightOfset + segmentLen] -
+                  integralImage[widthOfset][heightOfset + segmentLen] -
+                  integralImage[widthOfset + segmentLen][heightOfset]
+                )
+            }
+        }
+
+        // Main condition for binarization
+        if(segmentSize * pixelBrightness > 
+           segmentBrightness * (1 - allowableError / 100)) {
+                source[ofset] = 0;
+                source[ofset + 1] = 0;
+                source[ofset + 2] = 0;
+        } else {
+                source[ofset] = 255;
+                source[ofset + 1] = 255;
+                source[ofset + 2] = 255;
+        }
+    }
+    /*
     for(var index = 0; index < source.length; index += 4) {
         pixels.push(new Pixel(source[index],
                               source[index + 1],
@@ -174,9 +255,10 @@ function doBinarization(source, width, height, segment, allowableError) {
                               integralImage[yLeft * width + xLeft] -
                               integralImage[yLeft * width + xRight] -
                               integralImage[yRight * width + xLeft]);
-            console.log(brightness);
+            console.log(countPoint + "\\" + integralImage[yRight * width + xRight] + "(" + yRight * width + xRight + ")|" + integralImage[yLeft * width + xLeft] + "|" +
+                        integralImage[yLeft * width + xRight] + "|" + integralImage[yRight * width + xLeft] + "(" + yRight * width + xLeft + ")");//yLeft + "|" + width + "|" + xLeft);
         }
-    }
+    }*/
     /*
     var pixelCount = imageData.length / 4;
     var pixelInSegm = pixelCount / segment;
