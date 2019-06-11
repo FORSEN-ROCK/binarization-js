@@ -4,7 +4,8 @@
 
         console.log(files[0].type);
         if(files.length > 0) {
-            if(files[0].type == "image/png") {
+            if(files[0].type == "image/png" ||
+               files[0].type == "image/jpeg") {
 
                 // Show image in left box
                 var loader = new FileReader();
