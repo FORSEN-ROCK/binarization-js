@@ -115,8 +115,8 @@ function Pixel(red, green, blue, alpha) {
         *   @return {numbrt} avgRBG
         */
 
-        return Math.ceil((this._red + this._blue + this._green) / 3);
-        //return 0.2125 * this._red + 0.7154 * this._green + 0.0721 * this._blue;
+        //return Math.ceil((this._red + this._blue + this._green) / 3);
+        return 0.2125 * this._red + 0.7154 * this._green + 0.0721 * this._blue;
     };
 };
 
@@ -159,12 +159,11 @@ function doBinarization(source, width, height, segment, allowableError) {
         integralImage.push(column);
     }
 
-    console.table(integralImage);
-    console.log(integralImage[0][0] + integralImage[19][19] - (integralImage[19][0] + integralImage[0][19]));
+    //console.table(integralImage);
+    //console.log(integralImage[0][0] + integralImage[19][19] - (integralImage[19][0] + integralImage[0][19]));
 
     // Do binarization
     var segmentLen = Math.floor(width / segment);
-    console.log(segmentLen);
 
     // Define defaulte value of segmentBrightness
     var segmentBrightness = (integralImage[0][0] + 
@@ -179,54 +178,27 @@ function doBinarization(source, width, height, segment, allowableError) {
     var widthStart = 0
     var heightStart = 0;
     var widthLimit = 0;
-    var heightLimit = segmentLen;
-    var testCount = 0;
+    var heightLimit = 0;//segmentLen;
 
     // Main loop
     for(var ofset = 0; ofset < source.length; ofset += 4) {
-        var pixelBrightness = (source[ofset] + source[ofset + 1] +
-                               source[ofset + 2]);
+        //var pixelBrightness = (source[ofset] + source[ofset + 1] +
+        //                       source[ofset + 2]);
 
-/*
-        if(segmentLen > 10 && (widthOfset % segmentLen == 0) &&
-          (heightOfset % segmentLen == 0)) {
-            testCount++;
+        var pixelBrightness = (0.2125 * source[ofset] + 0.7154 * source[ofset + 1] +
+                               0.0721 * source[ofset + 2]);
 
-            //widthLimit += (widthOfset + segmentLen);
-
-            if(heightOfset % segmentLen == 0) {
-                heightLimit = heightOfset + segmentLen;
-
-                if(heightLimit >= height)
-                    heightLimit = height - 1;
-            }
-
-            if(widthOfset % segmentLen == 0) {
-                widthLimit += segmentLen;
-
-                if(widthLimit >= width)
-                    widthLimit = width - 1;
-            }
-
-            segmentBrightness = (
-                  integralImage[widthOfset][heightOfset] +
-                  integralImage[widthLimit][heightLimit] -
-                  integralImage[widthOfset][heightLimit] -
-                  integralImage[widthLimit][heightOfset]
-                )
-
-             console.log("segmentBrightness = " + segmentBrightness + "| hl = " + heightLimit + "|ho =" + heightOfset + "| wl = " + widthLimit + " |wo = " + widthOfset);
-        }
-*/
         if(segmentLen > 10) {
-            if(widthOfset % segmentLen == 0) {
-                widthStart = widthOfset;
-                widthLimit = widthOfset + segmentLen;
+            if((widthOfset % segmentLen == 0) &&
+                widthOfset < width) {
+                    widthStart = widthOfset;
+                    widthLimit = widthOfset + segmentLen;
             }
 
-            if(heightOfset % segmentLen == 0) {
-                heightStart = heightOfset;
-                heightLimit = heightOfset + segmentLen;
+            if((heightOfset % segmentLen == 0) &&
+                heightOfset < height) {
+                    heightStart = heightOfset;
+                    heightLimit = heightOfset + segmentLen;
             }
 
             if(widthLimit >= width)
@@ -235,15 +207,21 @@ function doBinarization(source, width, height, segment, allowableError) {
             if(heightLimit >= height)
                     heightLimit = height - 1;
 
-            segmentBrightness = (
-                  integralImage[widthStart][heightStart] +
-                  integralImage[widthLimit][heightLimit] -
-                  integralImage[widthStart][heightLimit] -
-                  integralImage[widthLimit][heightStart]
-            );
+            if((widthOfset % segmentLen == 0 ||
+               heightOfset % segmentLen == 0) &&
+               (widthLimit - widthStart > 0) &&
+               (heightLimit - heightStart > 0)) {
 
-            segmentSize = ((widthLimit - widthStart) *
-                           (heightLimit - heightStart));
+                    segmentBrightness = (
+                          integralImage[widthStart][heightStart] +
+                          integralImage[widthLimit][heightLimit] -
+                          integralImage[widthStart][heightLimit] -
+                          integralImage[widthLimit][heightStart]
+                    );
+
+                    segmentSize = ((widthLimit - widthStart) *
+                                   (heightLimit - heightStart));
+            }
         }
 
         // Main condition for binarization
@@ -258,13 +236,13 @@ function doBinarization(source, width, height, segment, allowableError) {
                 source[ofset + 2] = 255;
         }
 
-        if(ofset % width == 0) {
+        if(ofset % (4 * width) == 0) {
             heightOfset++;
             widthOfset = 0;
             widthLimit = 0;
-        } else {
-            widthOfset++; //?
         }
+
+        if(ofset % (4 * width) != 0)
+            widthOfset++; //?
     }
-    console.log(testCount);
 };
