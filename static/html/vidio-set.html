@@ -2,13 +2,25 @@
 <html>
     <head>
         <link rel="stylesheet" href="..\css\video-set.css">
+        <script src="..\jquery\jquery-3.3.1.min.js"></script>
     </head>
     <body>
-        <input type="button" value="stop" id="screen-btm">
-        <div class="screen-panel">
-            <video id="screen"></video>
+        <div class="greed">
+            <div class="control-panel">
+                <input type="button" value="stop" id="screen-btm">
+            </div>
+            <!--div class="screen-panel">
+                <div class="box">
+                    <video id="screen" class="screen"></video>
+                </div>
+            </div-->
+            <div class="screen-panel">
+                <div class="box">
+                    <canvas id="test" class="screen"></canvas>
+                </div>
+            </div>
         </div>
-        <canvas id="test" class="screen"></canvas>
+        <video id="screen" class="screen"></video>
         <script src="..\scripts\video-set.js"></script>
     </body>
 </html>

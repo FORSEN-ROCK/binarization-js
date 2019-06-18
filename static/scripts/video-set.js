@@ -1,43 +1,80 @@
 (function() {
     var screen = document.querySelector("#screen");
     var canvas = document.getElementById("test");
-    var context = canvas.getContext('2d');
     var datas = [];
+
+    //screen.hidden = true;
+
     navigator.getUserMedia(
-    // Настройки
-    {
-        video: true
-    },
-    // Колбэк для успешной операции
-    function(stream){
+        // Set options
+        {
+            video: true
+        },
+        // Function for success call
+        function(stream){
 
-        // Создаём объект для видео потока и
-        // запускаем его в HTLM элементе video.
-        console.log(stream);
-        //screen.src = window.URL.createObjectURL(stream);
-        screen.srcObject = stream;
-        var mediaRecord = new MediaRecorder(stream, {video: true, videoBitsPerSecond : 2500000});
-        mediaRecord.start(10);
+            // Create video stream object and play in html
+            screen.srcObject = stream;
+            var mediaRecord = new MediaRecorder(stream, {video: true, videoBitsPerSecond : 2500000});
+            mediaRecord.start(10);
 
-        console.log(mediaRecord);
+            //console.log(mediaRecord);
 
-        mediaRecord.ondataavailable = function(event) {
-            context.drawImage(screen, 0, 0);
-            datas.push(event.data);
-        };
+            mediaRecord.ondataavailable = function(event) {
+                
+                var sourceWidth = $("#screen").width();
+                var sourceHeight = $("#screen").height();
 
-        // Воспроизводим видео.
-        screen.play();
-        //}
-        //console.log(mediaRecord.requestData());
-    },
-    // Колбэк для не успешной операции
-    function(err){
+                canvas.height = sourceHeight;
+                canvas.width = sourceWidth;
 
-        // Наиболее частые ошибки — PermissionDenied и DevicesNotFound.
-        console.error(err);
+                var context = canvas.getContext('2d');
 
-    });
+                context.drawImage(screen, 0, 0);
+
+                var imgData = context.getImageData(0, 0, sourceWidth, sourceHeight);
+
+                for(var item = 0; item < imgData.data.length; item += 4) {
+                    /*var avg = (imgData.data[item] + imgData.data[item + 1] + imgData.data[item + 2]) / 3;
+
+                    imgData.data[item] = avg;//imgData.data[item];
+                    imgData.data[item + 1] = avg;//imgData.data[item + 1];
+                    imgData.data[item + 2] = avg;//imgData.data[item + 2];*/
+
+                    if(item - 4 >= 0) {
+                        var currentPixel = (imgData.data[item] +
+                                            imgData.data[item + 1] +
+                                            imgData.data[item + 2]);
+
+                        var beforePixel = (imgData.data[item - 4] +
+                                           imgData.data[item - 3] +
+                                           imgData.data[item - 2]);
+
+                        if(Math.abs(currentPixel - beforePixel) >= 320) {
+                            imgData.data[item] = 255;
+                            imgData.data[item + 1] = 255;
+                            imgData.data[item + 2] = 255;
+                        } else {
+                            imgData.data[item] = 0;
+                            imgData.data[item + 1] = 0;
+                            imgData.data[item + 2] = 0;
+                        }
+                    }
+                }
+
+                context.putImageData(imgData, 0, 0);
+            };
+
+            // Play the video
+            screen.play();
+        },
+        // Function for fail call
+        function(err){
+
+            // Наиболее частые ошибки — PermissionDenied и DevicesNotFound.
+            console.error(err);
+
+        });
 
     var button = document.getElementById("screen-btm");
 
